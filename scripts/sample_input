@@ -1,0 +1,112 @@
+Initializing port 0... done: 
+Port 0, MAC address: 04:3F:72:AC:CD:C7
+
+Sketch parameters
+3 65536 1023
+Initiating print
+Counter: 3 0 395
+Counter: 3 0 1779
+Counter: 3 0 3403
+Counter: 4 0 5759
+Counter: 3 0 7229
+Counter: 1 0 7598
+Counter: 3 0 8428
+Counter: 2 0 9584
+Counter: 4 0 13514
+Counter: 4 0 14058
+Counter: 3 0 15434
+Counter: 4 0 16232
+Counter: 3 0 17270
+Counter: 3 0 21455
+Counter: 3 0 22260
+Counter: 3 0 24600
+Counter: 4 0 31638
+Counter: 3 0 35578
+Counter: 3 0 35661
+Counter: 2 0 36817
+Counter: 2 0 37031
+Counter: 3 0 39009
+Counter: 3 0 40541
+Counter: 3 0 43323
+Counter: 3 0 43458
+Counter: 4 0 43968
+Counter: 3 0 47274
+Counter: 4 0 47730
+Counter: 4 0 52999
+Counter: 4 0 53244
+Counter: 3 0 55728
+Counter: 4 0 56832
+Counter: 3 0 62631
+Counter: 3 1 2649
+Counter: 4 1 4564
+Counter: 4 1 8350
+Counter: 3 1 10008
+Counter: 4 1 11208
+Counter: 3 1 11473
+Counter: 3 1 12734
+Counter: 4 1 15013
+Counter: 3 1 18155
+Counter: 3 1 19497
+Counter: 4 1 20630
+Counter: 3 1 21020
+Counter: 3 1 24930
+Counter: 4 1 26242
+Counter: 3 1 27517
+Counter: 3 1 37400
+Counter: 3 1 37813
+Counter: 4 1 43166
+Counter: 2 1 45973
+Counter: 3 1 49481
+Counter: 4 1 49591
+Counter: 4 1 50106
+Counter: 3 1 51274
+Counter: 3 1 53518
+Counter: 4 1 54198
+Counter: 3 1 54518
+Counter: 1 1 54966
+Counter: 3 1 55742
+Counter: 3 1 55799
+Counter: 2 1 56539
+Counter: 2 1 56931
+Counter: 3 1 63835
+Counter: 3 1 63977
+Counter: 2 2 3291
+Counter: 3 2 6368
+Counter: 4 2 8113
+Counter: 2 2 8757
+Counter: 3 2 9756
+Counter: 4 2 12314
+Counter: 3 2 12830
+Counter: 3 2 14799
+Counter: 3 2 15943
+Counter: 3 2 16506
+Counter: 3 2 16920
+Counter: 4 2 16923
+Counter: 3 2 17266
+Counter: 3 2 19798
+Counter: 4 2 22064
+Counter: 3 2 25037
+Counter: 3 2 26980
+Counter: 3 2 28945
+Counter: 4 2 29152
+Counter: 4 2 37880
+Counter: 4 2 39836
+Counter: 2 2 39978
+Counter: 3 2 42015
+Counter: 3 2 44248
+Counter: 4 2 47665
+Counter: 1 2 47867
+Counter: 3 2 47902
+Counter: 4 2 53729
+Counter: 3 2 58077
+Counter: 3 2 58204
+Counter: 4 2 60113
+Counter: 3 2 61049
+Counter: 3 2 61538
+Finished printing counters
+Port statistics ====================================
+Time: 474881.111899
+Packets received: 1000
+Core Entry received: 384
+
+
