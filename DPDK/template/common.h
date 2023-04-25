@@ -43,7 +43,7 @@
 #include "../../queue/readerwriterqueue.h"
 
 
-#define NUM_RX_QUEUE 10
+#define NUM_RX_QUEUE 1
 
 #define UPPER_LENGTH 0xa0
 #define TARGET_LENGTH 0x80
@@ -122,7 +122,7 @@ print_stats()
 	    t = rte_get_tsc_cycles();
 	    intervalMs = 1000000 * (t - last_time) / (rte_get_tsc_hz());
 
-	    if(intervalMs >= (1000000 >> 3)){
+	    if(intervalMs >= (100000000 >> 3)){
 	        total_packets_rx = 0;
             total_core_rx = port_statistics[NUM_RX_QUEUE].rx;
             for(i = 0;i < NUM_RX_QUEUE;++i){

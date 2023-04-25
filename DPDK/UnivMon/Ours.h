@@ -19,7 +19,17 @@ public:
        return new MyChild_Univ();
     }
 
-    void insert_child(Sketch<uint64_t>* p, myQueue& q, const uint64_t& packet){
+    void print_sketch_counters(Value (*sketch)[LENGTH]) {
+        for(uint32_t i = 0; i < HASH_NUM; i++) {
+            for(uint32_t j = 0; j < LENGTH; j++) {
+                if(sketch[i][j] != 0) {
+                    printf("Counter: %x %d %d\n", sketch[i][j], i, j);
+                }
+            }
+        }
+    }
+
+    void insert_child(Sketch<uint64_t>* p, myQueue& q, const uint64_t& packet, long printing_threshold){
         auto sketch = ((MyChild_Univ*)p)->sketch;
 
         uint32_t polar = hash(packet, 199);

@@ -20,6 +20,7 @@ public:
 
     void coordinator(unsigned queue_id){
         uint64_t start, end;
+	uint64_t total_count = 0;
         RTE_LOG(INFO, L2FWD, "entering coordinator %u\n", queue_id);
 
         Sketch<Key>* sketch = initialize_parent();
@@ -30,8 +31,10 @@ public:
                 if(que[i].try_dequeue(temp)){
                     merge(sketch, temp);
                     port_statistics[queue_id].rx += 1;
+		    total_count += 1;
                 }
             }
+	    printf("Total count merge: %d\n", total_count);
         }
 
         delete sketch;

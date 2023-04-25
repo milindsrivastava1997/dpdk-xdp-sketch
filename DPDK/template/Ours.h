@@ -11,6 +11,10 @@ public:
 
     myQueue que[NUM_RX_QUEUE];
 
+    Sketch<Key>* my_parent_sketch;
+
+    uint64_t number_since_last_print = 0;
+
     virtual Sketch<Key>* initialize_parent() = 0;
     virtual Sketch<Key>* initialize_child() = 0;
 
@@ -18,14 +22,16 @@ public:
 
     virtual void modify_threshold() = 0;
 
-    virtual void insert_child(Sketch<Key>* sketch, myQueue& q, const Key& packet) = 0;
+    virtual void insert_child(Sketch<Key>* sketch, myQueue& q, const Key& packet, long printing_threshold) = 0;
 
     void coordinator(unsigned queue_id){
         uint64_t start, end;
         uint64_t idx = 0;
+	uint64_t total_count = 0;
         RTE_LOG(INFO, L2FWD, "entering coordinator %u\n", queue_id);
 
         Sketch<Key>* sketch = initialize_parent();
+        //my_parent_sketch = initialize_parent();
         Entry temp;
 
         while(true){
@@ -34,12 +40,17 @@ public:
                     merge(sketch, temp);
                     port_statistics[queue_id].rx += 1;
                     idx += 1;
+		    total_count += 1;
                     if(idx > 0x3f){
                         idx = 0;
                         modify_threshold();
                     }
                 }
             }
+	    //printf("Total count: %d\n", total_count);
+	    //if(total_count >= 1000) {
+	    //    RTE_LOG(INFO, L2FWD, "%x\n", ((MyCM*)sketch));
+	    //}
             idx += NUM_RX_QUEUE;
             if(idx > 0x3f){
                 idx = 0;
@@ -50,7 +61,7 @@ public:
         delete sketch;
     }
 
-    void local(unsigned queue_id){
+    void local(unsigned queue_id, long printing_threshold){
         RTE_LOG(INFO, L2FWD, "%u core entering local sketch %u\n", rte_lcore_id(), queue_id);
 
         uint32_t batches = 0;
@@ -92,7 +103,8 @@ public:
             }
 
             for(uint32_t i = 0;i < nb_rx;++i){
-                insert_child(sketch, que[queue_id], item[i]);
+                number_since_last_print += 1;
+                insert_child(sketch, que[queue_id], item[i], printing_threshold);
                 number += 1;
             }
         }

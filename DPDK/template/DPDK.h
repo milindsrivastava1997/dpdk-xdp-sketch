@@ -118,6 +118,7 @@ int
 main_dpdk(int argc, char **argv)
 {
 	int ret, i;
+	int eal_init_ret;
 	uint16_t nb_ports;
 	uint16_t nb_ports_available = 1;
 	uint16_t last_port;
@@ -139,6 +140,7 @@ main_dpdk(int argc, char **argv)
 		rte_exit(EXIT_FAILURE, "Invalid EAL arguments\n");
 	argc -= ret;
 	argv += ret;
+	eal_init_ret = ret;
 
 	force_quit = false;
 	signal(SIGINT, signal_handler);
@@ -251,7 +253,7 @@ main_dpdk(int argc, char **argv)
 
 	ret = 0;
 
-	return ret;
+	return eal_init_ret;
 }
 
 #endif

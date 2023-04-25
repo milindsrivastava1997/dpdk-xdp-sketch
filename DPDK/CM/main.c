@@ -7,6 +7,8 @@
 
 std::atomic<bool> is_used[NUM_RX_QUEUE + 1];
 
+long printing_threshold;
+
 int distribute(void *arg){
     MYSKETCH* sketch = (MYSKETCH*) arg;
 
@@ -26,7 +28,7 @@ int distribute(void *arg){
     for(uint32_t i = 0;i < NUM_RX_QUEUE;++i){
         set = is_used[i + 1].exchange(set);
         if(!set){
-            sketch->local(i);
+            sketch->local(i, printing_threshold);
             return 3;
         }
     }
@@ -40,11 +42,14 @@ weak_atomic<int32_t> CM_Ours::PROMASK{0x8};
 
 int main(int argc, char **argv)
 {
-    main_dpdk(argc, argv);
+        int ret = main_dpdk(argc, argv);
+        argc -= ret;
+        argv += ret;
 
-	MYSKETCH* sketch = new MYSKETCH();
+        printing_threshold = atol(argv[1]);
 
-    int ret = rte_eal_mp_remote_launch(distribute, sketch, CALL_MAIN);
+        MYSKETCH* sketch = new MYSKETCH();
+        ret = rte_eal_mp_remote_launch(distribute, sketch, CALL_MAIN);
 
-	return ret;
+        return ret;
 }
