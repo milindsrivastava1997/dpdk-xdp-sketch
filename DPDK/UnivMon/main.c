@@ -40,16 +40,20 @@ int distribute(void *arg){
 
 weak_atomic<int32_t> Univ_Ours::PROMASK{0x8};
 
+void print_parameters() {
+    printf("Sketch parameters\n%d %d %d %d\n", MAX_LEVEL, HASH_NUM, LENGTH, HEAP_SIZE);
+}
+
 int main(int argc, char **argv)
 {
-        int ret = main_dpdk(argc, argv);
-        argc -= ret;
-        argv += ret;
+    int ret = main_dpdk(argc, argv);
+    argc -= ret;
+    argv += ret;
 
-        printing_threshold = atol(argv[1]);
+    printing_threshold = atol(argv[1]);
 
-        MYSKETCH* sketch = new MYSKETCH();
-        ret = rte_eal_mp_remote_launch(distribute, sketch, CALL_MAIN);
+    MYSKETCH* sketch = new MYSKETCH();
+    ret = rte_eal_mp_remote_launch(distribute, sketch, CALL_MAIN);
 
-        return ret;
+    return ret;
 }
