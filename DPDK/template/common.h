@@ -133,9 +133,9 @@ print_stats()
             printf("Port statistics ====================================\n");
             printf("Time: %f\n", (double)t / rte_get_tsc_hz());
 
-            printf("Packets received: %d\n",
+            printf("Packets received: %ld\n",
                     total_packets_rx - old_total_packets_rx);
-            printf("Core Entry received: %d\n",
+            printf("Core Entry received: %ld\n",
                     total_core_rx - old_total_core_rx);
 
             printf("\n\n");
