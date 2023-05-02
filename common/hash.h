@@ -2,6 +2,7 @@
 #define HASH_H
 
 #include "Util.h"
+#include "xxHash/xxhash.h"
 
 #include <x86intrin.h>
 #include <iostream>
@@ -101,47 +102,49 @@ static const uint32_t prime[] = {
         4091, 1013, 547, 6907, 7151, 353, 4457, 6091, 6949, 1129
 };
 
-class XXHash32
-{
-public:
-    static uint32_t hash(const uint8_t* data, uint64_t length, uint32_t seed = 0)
-    {
-        seed = prime[seed];
-        uint32_t state[4] = {seed + Prime[0] + Prime[1],
-                             seed + Prime[1], seed, seed - Prime[0]};
-        uint32_t result = length + state[2] + Prime[4];
-
-        // point beyond last byte
-        const uint8_t* stop = data + length;
-
-        // at least 4 bytes left ? => eat 4 bytes per step
-        for (; data + 4 <= stop; data += 4)
-            result = rotateLeft(result + *(uint32_t*)data * Prime[2], 17) * Prime[3];
-
-        // take care of remaining 0..3 bytes, eat 1 byte per step
-        while (data != stop)
-            result = rotateLeft(result + (*data++) * Prime[4], 11) * Prime[0];
-
-        // mix bits
-        result ^= result >> 15;
-        result *= Prime[1];
-        result ^= result >> 13;
-        result *= Prime[2];
-        result ^= result >> 16;
-        return result;
-    }
-
-private:
-    /// rotate bits, should compile to a single CPU instruction (ROL)
-    static inline uint32_t rotateLeft(uint32_t x, unsigned char bits)
-    {
-        return (x << bits) | (x >> (32 - bits));
-    }
-};
+//class XXHash32
+//{
+//public:
+//    static uint32_t hash(const uint8_t* data, uint64_t length, uint32_t seed = 0)
+//    {
+//        seed = prime[seed];
+//        uint32_t state[4] = {seed + Prime[0] + Prime[1],
+//                             seed + Prime[1], seed, seed - Prime[0]};
+//        uint32_t result = length + state[2] + Prime[4];
+//
+//        // point beyond last byte
+//        const uint8_t* stop = data + length;
+//
+//        // at least 4 bytes left ? => eat 4 bytes per step
+//        for (; data + 4 <= stop; data += 4)
+//            result = rotateLeft(result + *(uint32_t*)data * Prime[2], 17) * Prime[3];
+//
+//        // take care of remaining 0..3 bytes, eat 1 byte per step
+//        while (data != stop)
+//            result = rotateLeft(result + (*data++) * Prime[4], 11) * Prime[0];
+//
+//        // mix bits
+//        result ^= result >> 15;
+//        result *= Prime[1];
+//        result ^= result >> 13;
+//        result *= Prime[2];
+//        result ^= result >> 16;
+//        return result;
+//    }
+//
+//private:
+//    /// rotate bits, should compile to a single CPU instruction (ROL)
+//    static inline uint32_t rotateLeft(uint32_t x, unsigned char bits)
+//    {
+//        return (x << bits) | (x >> (32 - bits));
+//    }
+//};
 
 template<typename T>
 inline uint32_t hash(const T& data, uint32_t seed){
-    return XXHash32::hash((uint8_t*)&data, sizeof(T), seed);
+    //return XXHash32::hash((uint8_t*)&data, sizeof(T), seed);
+    seed = prime[seed];
+    return XXH32((uint8_t*)&data, sizeof(T), seed);
 }
 
 #endif
