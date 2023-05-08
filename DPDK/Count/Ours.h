@@ -27,6 +27,9 @@ public:
                 }
             }
         }
+        printf("Finished printing counters\n");
+        fflush(stdout);
+        fprintf(stderr, "Finished printing counters\n");
     }
 
     void insert_child(Sketch<uint64_t>* p, myQueue& q, const uint64_t& packet, long printing_threshold){
