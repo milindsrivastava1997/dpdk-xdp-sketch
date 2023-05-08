@@ -181,6 +181,10 @@ main_dpdk(int argc, char **argv)
 	struct rte_eth_conf local_port_conf = port_conf;
 	struct rte_eth_dev_info dev_info;
 
+	ret = rte_eth_promiscuous_enable(portid);
+	if (ret < 0)
+		rte_exit(EXIT_FAILURE, "Cannot enable promiscuous mode on port %u info: %s\n", portid, strerror(-ret));
+
 	/* init port */
 	printf("Initializing port %u... ", portid);
 	fflush(stdout);
