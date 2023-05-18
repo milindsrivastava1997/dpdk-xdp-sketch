@@ -94,7 +94,7 @@ int sketch_prog(struct xdp_md *skb)
     }
 
     uint32_t choice;
-    uint32_t hashNum = hash(packet, seed[0]);
+    uint32_t hashNum = hash(packet, seed_map[0]);
     uint32_t pos[2] = {hashNum >> 16, (hashNum & 0xffff) + LENGTH};
 
     uint64_t* key[2];

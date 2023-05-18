@@ -99,8 +99,8 @@ int sketch_prog(struct xdp_md *skb)
     uint32_t temp[HASH_NUM];
 
     for(uint32_t i = 0;i < HASH_NUM;++i){
-        pos[i] = hash(packet.src, seed[i]) % (uint32_t)LENGTH + i * LENGTH;
-        temp[i] = hash(packet.dst, seed[i]);
+        pos[i] = hash(packet.src, seed_map[i]) % (uint32_t)LENGTH + i * LENGTH;
+        temp[i] = hash(packet.dst, seed_map[i]);
     }
 
     for(uint32_t i = 0;i < HASH_NUM;++i){

@@ -14,12 +14,10 @@
 template<typename T>
 inline uint32_t hash(const T& data, uint32_t seed = 0);
 
-static const uint32_t Prime[5] = {
-        2654435761U,246822519U,3266489917U,668265263U,374761393U};
-
+static const uint32_t Prime[5] = {0x9e3779b1U, 0x85ebca77U, 0xc2b2ae3dU, 0x27d4eb2fU, 0x165667b1U};
 #define MAX_PRIME 1229
 
-static const uint32_t prime[] = {
+static const uint32_t seed_map[] = {
         181, 5197, 1151, 137, 5569, 7699, 2887, 8753, 9323, 8963, 6053, 8893, 9377, 6577, 733, 3527, 3881,
         6857, 9203, 3733, 3061, 8713, 1321, 887, 1913, 487, 1831, 257, 1459, 3833, 6397, 89, 3391,
         4759, 1579, 8731, 3517, 8467, 307, 3049, 3259, 4391, 6451, 3323, 7703, 2707, 2273, 9857, 5479, 7621,
@@ -143,7 +141,7 @@ private:
 template<typename T>
 inline uint32_t hash(const T& data, uint32_t seed){
     //return XXHash32::hash((uint8_t*)&data, sizeof(T), seed);
-    seed = prime[seed];
+    seed = seed_map[seed];
     return XXH32((uint8_t*)&data, sizeof(T), seed);
 }
 

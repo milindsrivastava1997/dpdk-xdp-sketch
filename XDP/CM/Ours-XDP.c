@@ -76,7 +76,7 @@ int sketch_prog(struct xdp_md *skb)
     }
         
     for(uint32_t i = 0;i < HASH_NUM;++i){
-        index[i] = hash(key, seed[i]) % (uint32_t)LENGTH + i * LENGTH;
+        index[i] = hash(key, seed_map[i]) % (uint32_t)LENGTH + i * LENGTH;
     }
 
     for(uint32_t i = 0;i < HASH_NUM;++i){
