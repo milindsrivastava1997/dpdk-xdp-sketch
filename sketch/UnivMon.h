@@ -3,7 +3,7 @@
 
 #include "sketch.h"
 
-typedef int8_t Value;
+typedef int32_t Value;
 
 constexpr static int32_t increment[2] = {1, -1};
 

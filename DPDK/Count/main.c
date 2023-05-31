@@ -52,6 +52,8 @@ int main(int argc, char **argv)
 
     printing_threshold = atol(argv[1]);
 
+    print_parameters();
+
     MYSKETCH* sketch = new MYSKETCH();
     ret = rte_eal_mp_remote_launch(distribute, sketch, CALL_MAIN);
 

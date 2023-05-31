@@ -3,7 +3,7 @@
 
 #include "sketch.h"
 
-typedef uint8_t Value;
+typedef uint32_t Value;
 
 template<typename Key>
 struct CM_Entry{

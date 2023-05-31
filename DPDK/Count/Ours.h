@@ -23,7 +23,7 @@ public:
         for(uint32_t i = 0; i < HASH_NUM; i++) {
             for(uint32_t j = 0; j < LENGTH; j++) {
                 if(sketch[i][j] != 0) {
-                    printf("Counter: %x %d %d\n", sketch[i][j], i, j);
+                    printf("Counter: %d %d %d\n", sketch[i][j], i, j);
                 }
             }
         }
@@ -41,14 +41,15 @@ public:
             uint32_t hashNum = hash(packet, hashPos);
             pos[hashPos] = (hashNum >> 1) % LENGTH;
             incre[hashPos] = increment[hashNum & 1];
+	    //printf("%lx %u %d %d\n", packet, hashNum, pos[hashPos], incre[hashPos]);
         }
 
         for(uint32_t hashPos = 0;hashPos < HASH_NUM;++hashPos){
             sketch[hashPos][pos[hashPos]] += incre[hashPos];
-            if(sketch[hashPos][pos[hashPos]] * incre[hashPos] >= PROMASK){
-                q.enqueue(Count_Entry<uint64_t>(packet, hashPos, pos[hashPos], sketch[hashPos][pos[hashPos]]));
-                sketch[hashPos][pos[hashPos]] = 0;
-            }
+            //if(sketch[hashPos][pos[hashPos]] * incre[hashPos] >= PROMASK){
+            //    q.enqueue(Count_Entry<uint64_t>(packet, hashPos, pos[hashPos], sketch[hashPos][pos[hashPos]]));
+            //    sketch[hashPos][pos[hashPos]] = 0;
+            //}
         }
 
         if(number_since_last_print >= printing_threshold) {

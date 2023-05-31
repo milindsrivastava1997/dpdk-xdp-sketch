@@ -68,6 +68,7 @@ public:
 
         struct rte_mbuf *pkts_burst[MAX_PKT_BURST];
         struct rte_tcp_hdr *tcp[MAX_PKT_BURST];
+        struct rte_ipv4_hdr *ip[MAX_PKT_BURST];
 
         int sent;
         uint64_t prev_tsc, diff_tsc, cur_tsc, timer_tsc;
@@ -92,13 +93,16 @@ public:
             port_statistics[queue_id].rx += nb_rx;
 
             for(uint32_t j = 0; j < nb_rx; j++) {
+                ip[j] = rte_pktmbuf_mtod_offset(pkts_burst[j], struct rte_ipv4_hdr *,
+                        sizeof(struct rte_ether_hdr));
                 tcp[j] = rte_pktmbuf_mtod_offset(pkts_burst[j], struct rte_tcp_hdr *,
                         sizeof(struct rte_ether_hdr) + sizeof(struct rte_ipv4_hdr));
                 rte_prefetch0(tcp[j]);
             }
 
             for(uint32_t j = 0; j < nb_rx; j++) {
-                init_key(item[j], rte_be_to_cpu_16(tcp[j]->src_port), rte_be_to_cpu_16(tcp[j]->dst_port));
+                //init_key(item[j], rte_be_to_cpu_16(tcp[j]->src_port), rte_be_to_cpu_16(tcp[j]->dst_port));
+                init_key(item[j], rte_be_to_cpu_32(ip[j]->dst_addr), rte_be_to_cpu_16(tcp[j]->dst_port));
                 rte_pktmbuf_free(pkts_burst[j]);
             }
 
