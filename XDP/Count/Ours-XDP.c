@@ -11,10 +11,12 @@ struct Length{
     uint64_t length;
 };
 
+typedef int8_t sketch_t;
+
 struct{
     __uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
     __type(key, __u32);
-    __type(value, uint8_t);
+    __type(value, sketch_t);
     __uint(max_entries, HASH_NUM * LENGTH);
 } sketch SEC(".maps");
 
@@ -44,16 +46,18 @@ struct {
     __uint(max_entries, 1);
 } buffer_length SEC(".maps");
 
-
 SEC("prog")
 int sketch_prog(struct xdp_md *skb)
 {
     uint64_t packet;
     
-    if(parse_key(skb, (struct Packet*)&packet) < 0)
+    //if(parse_key(skb, (struct Packet*)&packet) < 0)
+    if(parse_key(skb, &packet) < 0) {
         return XDP_DROP;
+    }
 
     uint64_t *number = bpf_map_lookup_elem(&packets, &zero);
+    //uint64_t *printing_threshold = bpf_map_lookup_elem(&printing_threshold_map, &zero);
     if(number){
         *number += 1;
         if(((*number) & 0xff) == 0xff){
@@ -68,35 +72,22 @@ int sketch_prog(struct xdp_md *skb)
         }
     }
 
-    int32_t *thd = bpf_map_lookup_elem(&threshold, &zero);
-
-    if(!thd){
-        return XDP_DROP;
-    }
-
-    int32_t increment[2];
+    int8_t increment[2];
     increment[0] = 1;
     increment[1] = -1;
         
     for(uint32_t i = 0;i < HASH_NUM;++i){
-        uint32_t hashNum = hash(packet, seed_map[i]);
-        uint32_t index = (hashNum >> 1) % (uint32_t)LENGTH + i * LENGTH;
-        int32_t incre = increment[hashNum & 1];
+        //uint32_t hashNum = hash(packet, i);
+        //bpf_printk("SM: packet: %lx %u %x\n", packet, i, hashNum);
+        //uint32_t index = (hashNum >> 1) % (uint32_t)LENGTH + i * LENGTH;
+        //int32_t incre = increment[hashNum & 1];
 
-        int8_t* counter = bpf_map_lookup_elem(&sketch, &index);
+        uint32_t index = i;
+        int8_t incre = increment[i & 1];
+
+        sketch_t* counter = bpf_map_lookup_elem(&sketch, &index);
         if(counter){
             *counter += incre;
-            if((*counter) * incre > *thd){
-                struct Entry *entry = bpf_ringbuf_reserve(&buffer, sizeof(struct Entry), 0);
-                if(entry){
-                    entry->key = packet;
-                    entry->hashPos = i;
-                    entry->pos = index;
-                    entry->value = *counter;
-                    bpf_ringbuf_submit(entry, 0);
-                    *counter = 0;
-                }
-            }
         }
     }
         

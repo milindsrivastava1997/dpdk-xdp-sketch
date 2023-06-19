@@ -97,7 +97,7 @@ uint32_t rotateLeft(uint32_t x, uint8_t bits){
     return (x << bits) | (x >> (32 - bits));
 }
 
-uint32_t hash(const uint8_t* data, uint64_t length, uint32_t seed = 0){
+uint32_t xxhash(const uint8_t* data, uint64_t length, uint32_t seed){
     uint32_t state[4] = {seed + Prime[0] + Prime[1],
                          seed + Prime[1], seed, seed - Prime[0]};
     uint32_t result = length + state[2] + Prime[4];
@@ -119,6 +119,11 @@ uint32_t hash(const uint8_t* data, uint64_t length, uint32_t seed = 0){
     result *= Prime[2];
     result ^= result >> 16;
     return result;
+}
+
+uint32_t hash(const uint64_t data, uint32_t seed) {
+    seed = seed_map[seed];
+    return xxhash((uint8_t*)&data, sizeof(uint64_t), seed);
 }
 
 #endif

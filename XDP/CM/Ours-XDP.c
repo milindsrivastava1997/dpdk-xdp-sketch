@@ -11,10 +11,12 @@ struct Length{
     uint64_t length;
 };
 
+typedef int8_t sketch_t;
+
 struct{
     __uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
     __type(key, __u32);
-    __type(value, uint8_t);
+    __type(value, sketch_t);
     __uint(max_entries, HASH_NUM * LENGTH);
 } sketch SEC(".maps");
 
@@ -48,10 +50,12 @@ struct {
 SEC("prog")
 int sketch_prog(struct xdp_md *skb)
 {
-    uint64_t key;
+    uint64_t packet;
     
-    if(parse_key(skb, (struct Packet*)&key) < 0)
+    //if(parse_key(skb, (struct Packet*)&key) < 0)
+    if(parse_key(skb, &packet) < 0) {
         return XDP_DROP;
+    }
 
     uint64_t *number = bpf_map_lookup_elem(&packets, &zero);
     if(number){
@@ -69,31 +73,12 @@ int sketch_prog(struct xdp_md *skb)
     }
 
     uint32_t index[HASH_NUM];
-    int32_t *thd = bpf_map_lookup_elem(&threshold, &zero);
-
-    if(!thd){
-        return XDP_DROP;
-    }
         
     for(uint32_t i = 0;i < HASH_NUM;++i){
-        index[i] = hash(key, seed_map[i]) % (uint32_t)LENGTH + i * LENGTH;
-    }
-
-    for(uint32_t i = 0;i < HASH_NUM;++i){
-        uint8_t* counter = bpf_map_lookup_elem(&sketch, &index[i]);
+        index[i] = hash(packet, i) % (uint32_t)LENGTH + i * LENGTH;
+        sketch_t* counter = bpf_map_lookup_elem(&sketch, &index[i]);
         if(counter){
             *counter += 1;
-            if(*counter > *thd){
-                struct Entry *entry = bpf_ringbuf_reserve(&buffer, sizeof(struct Entry), 0);
-                if(entry){
-                    entry->key = key;
-                    entry->hashPos = i;
-                    entry->pos = index[i];
-                    entry->value = *counter;
-                    bpf_ringbuf_submit(entry, 0);
-                    *counter = 0;
-                }
-            }
         }
     }
         

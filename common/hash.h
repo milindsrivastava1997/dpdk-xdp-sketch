@@ -2,7 +2,7 @@
 #define HASH_H
 
 //#include "Util.h"
-#include "xxHash/xxhash.h"
+//#include "xxHash/xxhash.h"
 
 #include <x86intrin.h>
 #include <iostream>
@@ -140,9 +140,9 @@ private:
 
 template<typename T>
 inline uint32_t hash(const T& data, uint32_t seed){
-    //return XXHash32::hash((uint8_t*)&data, sizeof(T), seed);
     seed = seed_map[seed];
-    return XXH32((uint8_t*)&data, sizeof(T), seed);
+    return XXHash32::hash((uint8_t*)&data, sizeof(T), seed);
+    //return XXH32((uint8_t*)&data, sizeof(T), seed);
 }
 
 #endif

@@ -93,7 +93,7 @@ public:
 
 int main(int argc, char *argv[]){
     Abstract* abs = new Ours();
-    abs->update();
+    abs->update(strtoul(argv[1], NULL, 0));
     delete abs;
     return 0;
 }

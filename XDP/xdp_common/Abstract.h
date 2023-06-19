@@ -8,6 +8,7 @@
 
 #include <net/if.h>
 #include <linux/if_link.h>
+#include <sys/ioctl.h>
 
 #include <bpf/bpf.h>
 #include <bpf/libbpf.h>
@@ -26,6 +27,8 @@ struct Length{
 
 static const uint32_t zero = 0;
 static int ncpus = 0;
+typedef int64_t sketch_t;
+
 /* This function will count the per-CPU number of packets and print out
  * the total number of dropped packets number and PPS (packets per second).
 */
@@ -67,17 +70,68 @@ void poll_stats(int fd){
     delete [] prev;
 }
 
+void print_counters(int stats_fd, int sketch_fd, uint64_t printing_threshold) {
+    ncpus = libbpf_num_possible_cpus();
+    uint64_t* values = new uint64_t [ncpus];
+    //int8_t* sketch_ptr = new int8_t [HASH_NUM * LENGTH];
+    sketch_t* sketch_ptr = new sketch_t [ncpus];
+    int ret;
+
+    uint64_t sum = 0;
+    memset(values, 0, sizeof(uint64_t) * ncpus);
+    memset(sketch_ptr, 0, sizeof(sketch_t) * ncpus);
+    //memset(sketch_ptr, 0, sizeof(int8_t) * HASH_NUM * LENGTH);
+
+    TP last_time = now(), t;
+
+    while (1) {
+        t = now();
+
+        double seconds = durationms(t, last_time);
+
+        if(seconds >= 1000000){
+            sum = 0;
+            ret = bpf_map_lookup_elem(stats_fd, &zero, values);
+            printf("stats fd ret: %d\n", ret);
+            for (uint32_t i = 0; i < ncpus; i++)
+                sum += values[i];
+
+            if(sum % printing_threshold == 0) {
+                for (uint32_t sketch_idx = 0; sketch_idx < 3 * 65536; sketch_idx++) {
+                    ret = bpf_map_lookup_elem(sketch_fd, &sketch_idx, sketch_ptr);
+                    if(ret < 0) {
+                        printf("sketch fd ret: %d dbg: %d\n", ret, sketch_idx);
+                    }
+                    for (uint32_t i = 0; i < ncpus; i++) {
+                        if(sketch_ptr[i] != 0) {
+                            printf("SM %d %d %d\n", sketch_idx, i, (int8_t)sketch_ptr[i]);
+                        }
+                    }
+                }
+                printf("----------------------\n");
+            }
+            last_time = t;
+        }
+    }
+
+    delete [] sketch_ptr;
+    delete [] values;
+}
+
 class Abstract{
 public:
 
     virtual int32_t merge() = 0;
 
-    int update(){
-        if(xdp_load() < 0)
+    int update(uint64_t printing_threshold){
+        if(xdp_load(printing_threshold) < 0)
             return -1;
 
         std::thread stats;
+        std::thread print;
+
         stats = std::thread(poll_stats, stats_fd);
+        print = std::thread(print_counters, stats_fd, sketch_fd, printing_threshold);
 
         merge();
 
@@ -85,7 +139,34 @@ public:
         return 0;
     }
 
-    int32_t xdp_load(){
+    int32_t xdp_load(uint64_t printing_threshold){
+        struct ifreq ifr;
+        int sock_fd;
+
+        // set interface in promiscuous mode
+        sock_fd = socket(AF_INET, SOCK_DGRAM, 0);
+        if(sock_fd < 0) {
+            printf("Could not create socket\n");
+            return -1;
+        }
+
+        memset(&ifr, 0, sizeof(ifr));
+        strncpy(ifr.ifr_name, nic, sizeof(ifr.ifr_name) - 1);
+
+        if (ioctl(sock_fd, SIOCGIFFLAGS, &ifr) != 0) {
+            printf("Could not get flags\n");
+            close(sock_fd);
+            return -1;
+        }
+
+        ifr.ifr_flags |= IFF_PROMISC;
+
+        if (ioctl(sock_fd, SIOCSIFFLAGS, &ifr) != 0) {
+            printf("Could not set flags\n");
+            close(sock_fd);
+            return -1;
+        }
+
         int32_t ifindex = if_nametoindex(nic);
         if (!ifindex) {
             printf("get ifindex from interface name failed\n");
@@ -114,14 +195,18 @@ public:
         thd_fd = bpf_object__find_map_fd_by_name(bpf_obj, "threshold");
         buf_fd = bpf_object__find_map_fd_by_name(bpf_obj, "buffer");
         len_fd = bpf_object__find_map_fd_by_name(bpf_obj, "buffer_length");
+        sketch_fd = bpf_object__find_map_fd_by_name(bpf_obj, "sketch");
+        //printing_threshold_fd = bpf_object__find_map_fd_by_name(bpf_obj, "printing_threshold_map");
 
-        if (stats_fd < 0 || thd_fd < 0 || buf_fd < 0 || len_fd < 0) {
+        if (stats_fd < 0 || thd_fd < 0 || buf_fd < 0 || len_fd < 0 || sketch_fd < 0) {
             printf("Error, get stats/thd fd from bpf obj failed\n");
             return -1;
         }
 
         int32_t threshold = 64;
-        bpf_map_update_elem(thd_fd, &zero, &threshold, BPF_EXIST);
+        //bpf_map_update_elem(thd_fd, &zero, &threshold, BPF_EXIST);
+
+        //bpf_map_update_elem(printing_threshold_fd, &zero, &printing_threshold, BPF_EXIST);
 
         return 0;
     }
@@ -130,6 +215,7 @@ public:
 
     struct bpf_object *bpf_obj;
     int32_t stats_fd, thd_fd, buf_fd, len_fd;
+    int32_t sketch_fd;
 };
 
 #endif
