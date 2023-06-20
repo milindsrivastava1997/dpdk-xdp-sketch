@@ -77,13 +77,10 @@ int sketch_prog(struct xdp_md *skb)
     increment[1] = -1;
         
     for(uint32_t i = 0;i < HASH_NUM;++i){
-        //uint32_t hashNum = hash(packet, i);
+        uint32_t hashNum = hash(packet, i);
         //bpf_printk("SM: packet: %lx %u %x\n", packet, i, hashNum);
-        //uint32_t index = (hashNum >> 1) % (uint32_t)LENGTH + i * LENGTH;
-        //int32_t incre = increment[hashNum & 1];
-
-        uint32_t index = i;
-        int8_t incre = increment[i & 1];
+        uint32_t index = (hashNum >> 1) % (uint32_t)LENGTH + i * LENGTH;
+        int32_t incre = increment[hashNum & 1];
 
         sketch_t* counter = bpf_map_lookup_elem(&sketch, &index);
         if(counter){
