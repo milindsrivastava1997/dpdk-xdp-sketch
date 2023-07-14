@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 
 #include <net/if.h>
 #include <linux/if_link.h>
@@ -28,6 +29,7 @@ struct Length{
 static const uint32_t zero = 0;
 static int ncpus = 0;
 typedef int64_t sketch_t;
+int32_t global_sketch_fd = -1;
 
 /* This function will count the per-CPU number of packets and print out
  * the total number of dropped packets number and PPS (packets per second).
@@ -37,6 +39,7 @@ void poll_stats(int fd){
     uint64_t* values = new uint64_t [ncpus];
     uint64_t* prev = new uint64_t [ncpus];
     uint64_t sum = 0;
+    uint64_t values_sum = 0;
 
     memset(values, 0, sizeof(uint64_t) * ncpus);
     memset(prev, 0, sizeof(uint64_t) * ncpus);
@@ -50,24 +53,51 @@ void poll_stats(int fd){
 
         double seconds = durationms(t, last_time);
 
-        if(seconds >= 1000000){
+        if(seconds >= 10000000){
             sum = 0;
             bpf_map_lookup_elem(fd, &zero, values);
             for (uint32_t i = 0; i < ncpus; i++){
                 sum += (values[i] - prev[i]);
+                values_sum += values[i];
                 if(values[i] - prev[i] > 0){
-                    printf("%d : %10lu pkt/s\n", i, values[i] - prev[i]);
+                    printf("%d : %10lu pkt/10s\n", i, values[i] - prev[i]);
                 }
             }
 
-            printf("%10lu pkt/s\n", sum);
+            printf("%10lu pkt/10s; total=%lu\n", sum, values_sum);
             memcpy(prev, values, sizeof(uint64_t) * ncpus);
             last_time = t;
+            values_sum = 0;
         }
     }
 
     delete [] values;
     delete [] prev;
+}
+
+void print_counters_once() {
+    ncpus = libbpf_num_possible_cpus();
+    sketch_t* sketch_ptr = new sketch_t [ncpus];
+    int ret;
+
+    memset(sketch_ptr, 0, sizeof(sketch_t) * ncpus);
+
+    for (uint32_t sketch_idx = 0; sketch_idx < 3 * 65536; sketch_idx++) {
+        ret = bpf_map_lookup_elem(global_sketch_fd, &sketch_idx, sketch_ptr);
+        if(ret < 0) {
+            printf("sketch fd ret: %d dbg: %d\n", ret, sketch_idx);
+        }
+        for (uint32_t i = 0; i < ncpus; i++) {
+            if(sketch_ptr[i] != 0) {
+                printf("Counter: %d %d %d\n", sketch_idx, i, (int8_t)sketch_ptr[i]);
+            }
+        }
+    }
+    printf("Finished printing counters\n");
+    fflush(stdout);
+    fprintf(stderr, "Finished printing counters\n");
+
+    delete [] sketch_ptr;
 }
 
 void print_counters(int stats_fd, int sketch_fd, uint64_t printing_threshold) {
@@ -89,26 +119,29 @@ void print_counters(int stats_fd, int sketch_fd, uint64_t printing_threshold) {
 
         double seconds = durationms(t, last_time);
 
-        if(seconds >= 1000000){
+        if(seconds >= 10000000){
             sum = 0;
             ret = bpf_map_lookup_elem(stats_fd, &zero, values);
             printf("stats fd ret: %d\n", ret);
             for (uint32_t i = 0; i < ncpus; i++)
                 sum += values[i];
 
-            if(sum % printing_threshold == 0) {
-                for (uint32_t sketch_idx = 0; sketch_idx < 3 * 65536; sketch_idx++) {
-                    ret = bpf_map_lookup_elem(sketch_fd, &sketch_idx, sketch_ptr);
-                    if(ret < 0) {
-                        printf("sketch fd ret: %d dbg: %d\n", ret, sketch_idx);
-                    }
-                    for (uint32_t i = 0; i < ncpus; i++) {
-                        if(sketch_ptr[i] != 0) {
-                            printf("SM %d %d %d\n", sketch_idx, i, (int8_t)sketch_ptr[i]);
-                        }
-                    }
-                }
-                printf("----------------------\n");
+            if(sum % printing_threshold == 0 && sum > 0) {
+                print_counters_once();
+                //for (uint32_t sketch_idx = 0; sketch_idx < 3 * 65536; sketch_idx++) {
+                //    ret = bpf_map_lookup_elem(sketch_fd, &sketch_idx, sketch_ptr);
+                //    if(ret < 0) {
+                //        printf("sketch fd ret: %d dbg: %d\n", ret, sketch_idx);
+                //    }
+                //    for (uint32_t i = 0; i < ncpus; i++) {
+                //        if(sketch_ptr[i] != 0) {
+                //            printf("Counter: %d %d %d\n", sketch_idx, i, (int8_t)sketch_ptr[i]);
+                //        }
+                //    }
+                //}
+                //printf("Finished printing counters\n");
+                //fflush(stdout);
+                //fprintf(stderr, "Finished printing counters\n");
             }
             last_time = t;
         }
@@ -116,6 +149,12 @@ void print_counters(int stats_fd, int sketch_fd, uint64_t printing_threshold) {
 
     delete [] sketch_ptr;
     delete [] values;
+}
+
+void sigint_handler(int signum) {
+    printf("Got sigint\n");
+    print_counters_once();
+    exit(0);
 }
 
 class Abstract{
@@ -127,11 +166,14 @@ public:
         if(xdp_load(printing_threshold) < 0)
             return -1;
 
+        // register SIGINT handler
+        signal(SIGINT, sigint_handler);
+
         std::thread stats;
         std::thread print;
 
         stats = std::thread(poll_stats, stats_fd);
-        print = std::thread(print_counters, stats_fd, sketch_fd, printing_threshold);
+        //print = std::thread(print_counters, stats_fd, sketch_fd, printing_threshold);
 
         merge();
 
@@ -196,17 +238,15 @@ public:
         buf_fd = bpf_object__find_map_fd_by_name(bpf_obj, "buffer");
         len_fd = bpf_object__find_map_fd_by_name(bpf_obj, "buffer_length");
         sketch_fd = bpf_object__find_map_fd_by_name(bpf_obj, "sketch");
-        //printing_threshold_fd = bpf_object__find_map_fd_by_name(bpf_obj, "printing_threshold_map");
+        global_sketch_fd = sketch_fd;
 
         if (stats_fd < 0 || thd_fd < 0 || buf_fd < 0 || len_fd < 0 || sketch_fd < 0) {
             printf("Error, get stats/thd fd from bpf obj failed\n");
             return -1;
         }
 
-        int32_t threshold = 64;
+        //int32_t threshold = 64;
         //bpf_map_update_elem(thd_fd, &zero, &threshold, BPF_EXIST);
-
-        //bpf_map_update_elem(printing_threshold_fd, &zero, &printing_threshold, BPF_EXIST);
 
         return 0;
     }

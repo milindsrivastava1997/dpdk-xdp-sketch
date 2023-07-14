@@ -1,3 +1,6 @@
+import time
+import shlex
+import select
 import struct
 import subprocess
 
@@ -9,12 +12,16 @@ def get_ssh_cmd(username, ip, cmd, sudo=False):
         ssh_cmd = 'sudo ' + ssh_cmd
     return ssh_cmd
 
-def execute_in_shell(cmd):
-    subprocess.run(cmd, shell=True)
+def execute_in_shell(cmd, cwd=None):
+    print(cmd)
+    subprocess.run(cmd, shell=True, cwd=cwd)
 
-def execute_with_popen(cmd):
-    #NOTE: shell=True is not passed because that prevents .kill() from working
-    return subprocess.Popen(cmd)
+def execute_with_popen(cmd, cwd=None):
+    #NOTE: shell=True is not passed because that prevents .kill() from working?
+    print(cmd)
+    popen = subprocess.Popen(cmd, cwd=cwd, shell=True)
+    time.sleep(10)
+    return popen
 
 def check_socket(sock):
     idx = 0
@@ -37,7 +44,7 @@ def recv_msg(sock):
     raw_msg_len = recvall(sock, 4)
     if not raw_msg_len:
         assert(False)
-    msg_len = struct.unpack('>I', raw_msglen)[0]
+    msg_len = struct.unpack('>I', raw_msg_len)[0]
     data = recvall(sock, msg_len)
     if data is None:
         assert(False)
@@ -46,8 +53,8 @@ def recv_msg(sock):
 def recvall(sock, n):
     data = b''
 
-    if not check_socket(sock):
-        return None
+    #if not check_socket(sock):
+    #    return None
 
     while len(data) < n:
         packet = sock.recv(n - len(data))

@@ -1,5 +1,5 @@
 #!/bin/bash
 
+(./install_deps.sh)
 (./install_dpdk.sh)
-(./install_lua.sh)
 (./install_pktgen.sh)

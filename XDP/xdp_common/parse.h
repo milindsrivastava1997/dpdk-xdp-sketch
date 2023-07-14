@@ -25,7 +25,7 @@
 
 inline void init_key(uint64_t* key, uint64_t src, uint64_t dst) {
     *key = ((src << 32) | dst);
-    bpf_printk("SM: init key: %lx %x %x\n", *key, src, dst);
+    //bpf_printk("SM: init key: %lx %x %x\n", *key, src, dst);
 }
 
 //inline int32_t parse_key(struct xdp_md *skb, struct Packet* key){
@@ -43,6 +43,8 @@ inline int32_t parse_key(struct xdp_md *skb, uint64_t* key){
         struct tcphdr *h = ((void*)iph) + sizeof(struct iphdr);
         //init_key(key, h->source, h->dest);
         init_key(key, bpf_ntohl(iph->daddr), bpf_ntohs(h->dest));
+        //bpf_printk("TCP: %lx %lx\n", bpf_ntohl(iph->saddr), bpf_ntohl(iph->daddr));
+        //bpf_printk("TCP: %lx %lx\n", bpf_ntohs(h->source), bpf_ntohs(h->dest));
         return 0;
     }
     else if(iph->protocol == IPPROTO_UDP) {
@@ -51,6 +53,8 @@ inline int32_t parse_key(struct xdp_md *skb, uint64_t* key){
         struct udphdr *h = ((void*)iph) + sizeof(struct iphdr);
         //init_key(key, h->source, h->dest);
         init_key(key, bpf_ntohl(iph->daddr), bpf_ntohs(h->dest));
+        //bpf_printk("UDP: %lx %lx\n", bpf_ntohl(iph->saddr), bpf_ntohl(iph->daddr));
+        //bpf_printk("UDP: %lx %lx\n", bpf_ntohs(h->source), bpf_ntohs(h->dest));
         return 0;
     }
     else 

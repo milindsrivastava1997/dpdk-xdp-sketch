@@ -26,7 +26,7 @@ sudo sh -c "ulimit -l unlimited"
 
 # invoke subshell so that cd is done only for the make install
 (cd lib/libxdp; sudo make install)
-(cd lib/libbpf; sudo make install)
+(cd lib/libbpf/src; sudo make install)
 
 # install libbpf .so files
 so_install_dir=$(get_libxdp_install_dir)

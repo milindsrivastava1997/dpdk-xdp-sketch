@@ -8,26 +8,30 @@ local sendport = "0";
 
 -- parameters to use
 local burst = 1;
-local rate = 0.01;
+local rate = 0.1;
 
 function main()
-    -- get dstmac and count from command line args
+    -- get dstmac and count from env variables
+    local count = tonumber(os.getenv("MY_COUNT"));
+    local dstmac = os.getenv("MY_DSTMAC");
 
     -- set parameters
     pktgen.set(sendport, "burst", burst);
     pktgen.set(sendport, "rate", rate);
-    pktgen.set(sendport, "count", os.getenv("MY_COUNT"));
-	pktgen.set_mac(sendport, "dst", os.getenv("MY_DSTMAC"));
+    pktgen.set(sendport, "count", count);
+    pktgen.set_mac(sendport, "dst", dstmac);
 
+    pktgen.pcap(sendport, "on");
     pktgen.start(sendport);
     pktgen.delay(3000)
     -- spin in a loop till pktgen stops
-    while( true ) do
-        local sending = pktgen.isSending(sendport);
-        if ( sending[tonumber(port)] == "n" ) then
+    while (true) do
+        local stats = pktgen.portStats(sendport, "port");
+        local sent_count = stats[tonumber(sendport)].opackets;
+        if (sent_count == count) then
             break;
         end
-        pktgen.delay(1000)
+        pktgen.delay(1000);
     end
     pktgen.stop(sendport);
     pktgen.quit();
