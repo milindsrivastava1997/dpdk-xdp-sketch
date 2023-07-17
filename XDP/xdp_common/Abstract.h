@@ -100,57 +100,6 @@ void print_counters_once() {
     delete [] sketch_ptr;
 }
 
-void print_counters(int stats_fd, int sketch_fd, uint64_t printing_threshold) {
-    ncpus = libbpf_num_possible_cpus();
-    uint64_t* values = new uint64_t [ncpus];
-    //int8_t* sketch_ptr = new int8_t [HASH_NUM * LENGTH];
-    sketch_t* sketch_ptr = new sketch_t [ncpus];
-    int ret;
-
-    uint64_t sum = 0;
-    memset(values, 0, sizeof(uint64_t) * ncpus);
-    memset(sketch_ptr, 0, sizeof(sketch_t) * ncpus);
-    //memset(sketch_ptr, 0, sizeof(int8_t) * HASH_NUM * LENGTH);
-
-    TP last_time = now(), t;
-
-    while (1) {
-        t = now();
-
-        double seconds = durationms(t, last_time);
-
-        if(seconds >= 10000000){
-            sum = 0;
-            ret = bpf_map_lookup_elem(stats_fd, &zero, values);
-            printf("stats fd ret: %d\n", ret);
-            for (uint32_t i = 0; i < ncpus; i++)
-                sum += values[i];
-
-            if(sum % printing_threshold == 0 && sum > 0) {
-                print_counters_once();
-                //for (uint32_t sketch_idx = 0; sketch_idx < 3 * 65536; sketch_idx++) {
-                //    ret = bpf_map_lookup_elem(sketch_fd, &sketch_idx, sketch_ptr);
-                //    if(ret < 0) {
-                //        printf("sketch fd ret: %d dbg: %d\n", ret, sketch_idx);
-                //    }
-                //    for (uint32_t i = 0; i < ncpus; i++) {
-                //        if(sketch_ptr[i] != 0) {
-                //            printf("Counter: %d %d %d\n", sketch_idx, i, (int8_t)sketch_ptr[i]);
-                //        }
-                //    }
-                //}
-                //printf("Finished printing counters\n");
-                //fflush(stdout);
-                //fprintf(stderr, "Finished printing counters\n");
-            }
-            last_time = t;
-        }
-    }
-
-    delete [] sketch_ptr;
-    delete [] values;
-}
-
 void sigint_handler(int signum) {
     printf("Got sigint\n");
     print_counters_once();
@@ -170,10 +119,8 @@ public:
         signal(SIGINT, sigint_handler);
 
         std::thread stats;
-        std::thread print;
 
         stats = std::thread(poll_stats, stats_fd);
-        //print = std::thread(print_counters, stats_fd, sketch_fd, printing_threshold);
 
         merge();
 
@@ -237,10 +184,9 @@ public:
         thd_fd = bpf_object__find_map_fd_by_name(bpf_obj, "threshold");
         buf_fd = bpf_object__find_map_fd_by_name(bpf_obj, "buffer");
         len_fd = bpf_object__find_map_fd_by_name(bpf_obj, "buffer_length");
-        sketch_fd = bpf_object__find_map_fd_by_name(bpf_obj, "sketch");
-        global_sketch_fd = sketch_fd;
+        global_sketch_fd = bpf_object__find_map_fd_by_name(bpf_obj, "sketch");
 
-        if (stats_fd < 0 || thd_fd < 0 || buf_fd < 0 || len_fd < 0 || sketch_fd < 0) {
+        if (stats_fd < 0 || thd_fd < 0 || buf_fd < 0 || len_fd < 0 || global_sketch_fd < 0) {
             printf("Error, get stats/thd fd from bpf obj failed\n");
             return -1;
         }
@@ -255,7 +201,6 @@ public:
 
     struct bpf_object *bpf_obj;
     int32_t stats_fd, thd_fd, buf_fd, len_fd;
-    int32_t sketch_fd;
 };
 
 #endif

@@ -1,7 +1,7 @@
 #ifndef HASH_H
 #define HASH_H
 
-//#include "Util.h"
+#include "Util.h"
 
 #include <x86intrin.h>
 #include <iostream>
