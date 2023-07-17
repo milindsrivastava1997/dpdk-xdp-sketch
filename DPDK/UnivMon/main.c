@@ -4,6 +4,7 @@
 #include "../template/DPDK.h"
 
 #define MYSKETCH Univ_Ours
+#define CHILDSKETCH_TYPE MyChild_Univ
 
 std::atomic<bool> is_used[NUM_RX_QUEUE + 1];
 
@@ -42,6 +43,21 @@ weak_atomic<int32_t> Univ_Ours::PROMASK{0x8};
 
 void print_parameters() {
     printf("Sketch parameters\n%d %d %d %d\n", MAX_LEVEL, HASH_NUM, LENGTH, HEAP_SIZE);
+}
+
+void print_sketch_counters_2(void* sketch) {
+    CHILDSKETCH_TYPE* sketch_counter = (CHILDSKETCH_TYPE*)sketch;
+
+    for(uint32_t i = 0; i < HASH_NUM; i++) {
+        for(uint32_t j = 0; j < LENGTH; j++) {
+            if(sketch_counter->sketch[i][j] != 0) {
+                printf("Counter: %d %d %d\n", sketch_counter->sketch[i][j], i, j);
+            }
+        }
+    }
+    printf("Finished printing counters\n");
+    fflush(stdout);
+    fprintf(stderr, "Finished printing counters\n");
 }
 
 int main(int argc, char **argv)

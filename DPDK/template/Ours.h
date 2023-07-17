@@ -27,11 +27,9 @@ public:
     void coordinator(unsigned queue_id){
         uint64_t start, end;
         uint64_t idx = 0;
-	uint64_t total_count = 0;
         RTE_LOG(INFO, L2FWD, "entering coordinator %u\n", queue_id);
 
         Sketch<Key>* sketch = initialize_parent();
-        //my_parent_sketch = initialize_parent();
         Entry temp;
 
         while(true){
@@ -40,17 +38,12 @@ public:
                     merge(sketch, temp);
                     port_statistics[queue_id].rx += 1;
                     idx += 1;
-		    total_count += 1;
                     if(idx > 0x3f){
                         idx = 0;
                         modify_threshold();
                     }
                 }
             }
-	    //printf("Total count: %d\n", total_count);
-	    //if(total_count >= 1000) {
-	    //    RTE_LOG(INFO, L2FWD, "%x\n", ((MyCM*)sketch));
-	    //}
             idx += NUM_RX_QUEUE;
             if(idx > 0x3f){
                 idx = 0;
@@ -61,7 +54,7 @@ public:
         delete sketch;
     }
 
-    void local(unsigned queue_id, long printing_threshold){
+    void local(unsigned queue_id, long printing_threshold, Sketch<Key>** child_sketch_ptr=NULL){
         RTE_LOG(INFO, L2FWD, "%u core entering local sketch %u\n", rte_lcore_id(), queue_id);
 
         uint32_t batches = 0;
@@ -80,6 +73,10 @@ public:
 
         Key item[MAX_PKT_BURST];
         Sketch<Key>* sketch = initialize_child();
+        if(child_sketch_ptr != NULL) {
+            *child_sketch_ptr = sketch;
+        }
+        printf("Child sketch ptr in CPU %u: %lx\n", queue_id, (uint64_t)sketch);
 
         uint64_t number = 0;
         

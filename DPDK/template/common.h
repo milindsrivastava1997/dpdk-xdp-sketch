@@ -45,6 +45,10 @@
 
 #define NUM_RX_QUEUE 1
 
+// create array of Child_Count pointers; array length = number of CPUs = NUM_RX_QUEUE
+Sketch<uint64_t>* child_sketches[NUM_RX_QUEUE] = {NULL};
+void print_sketch_counters_2(void*);
+
 #define UPPER_LENGTH 0xa0
 #define TARGET_LENGTH 0x80
 #define LOWER_LENGTH 0x60
@@ -118,7 +122,7 @@ print_stats()
 	const char clr[] = { 27, '[', '2', 'J', '\0' };
 	const char topLeft[] = { 27, '[', '1', ';', '1', 'H','\0' };
 
-	while(true){
+	while(!force_quit){
 	    t = rte_get_tsc_cycles();
 	    intervalMs = 1000000 * (t - last_time) / (rte_get_tsc_hz());
 

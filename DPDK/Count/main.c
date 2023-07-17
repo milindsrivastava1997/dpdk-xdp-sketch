@@ -4,6 +4,7 @@
 #include "../template/DPDK.h"
 
 #define MYSKETCH Count_Ours
+#define CHILDSKETCH_TYPE MyChild_Count
 
 std::atomic<bool> is_used[NUM_RX_QUEUE + 1];
 
@@ -28,7 +29,7 @@ int distribute(void *arg){
     for(uint32_t i = 0;i < NUM_RX_QUEUE;++i){
         set = is_used[i + 1].exchange(set);
         if(!set){
-            sketch->local(i, printing_threshold);
+            sketch->local(i, printing_threshold, &(child_sketches[i]));
             return 3;
         }
     }
@@ -42,6 +43,21 @@ weak_atomic<int32_t> Count_Ours::PROMASK{0x8};
 
 void print_parameters() {
     printf("Sketch parameters\n%d %d %d\n", HASH_NUM, LENGTH, HEAP_SIZE);
+}
+
+void print_sketch_counters_2(void* sketch) {
+    CHILDSKETCH_TYPE* sketch_counter = (CHILDSKETCH_TYPE*)sketch;
+
+    for(uint32_t i = 0; i < HASH_NUM; i++) {
+        for(uint32_t j = 0; j < LENGTH; j++) {
+            if(sketch_counter->sketch[i][j] != 0) {
+                printf("Counter: %d %d %d\n", sketch_counter->sketch[i][j], i, j);
+            }
+        }
+    }
+    printf("Finished printing counters\n");
+    fflush(stdout);
+    fprintf(stderr, "Finished printing counters\n");
 }
 
 int main(int argc, char **argv)
