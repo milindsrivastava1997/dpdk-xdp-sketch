@@ -20,9 +20,10 @@ def parse_params(params_line):
     tokens = params_line.split(' ')
     tokens = [int(token) for token in tokens]
     
-    keys = ['rows', 'width', 'heap']
-    if len(tokens) == 4:
-        keys.insert('levels', 0)
+    keys = ['levels', 'rows', 'width', 'heap']
+    if len(tokens) == 3:
+        # prepend levels=1 to `tokens`
+        tokens.insert(1, 0)
 
     for k,t in zip(keys, tokens):
         parsed_params[k] = t
@@ -30,14 +31,21 @@ def parse_params(params_line):
     return parsed_params
 
 def parse_counters(counter_lines, parsed_params):
-    parsed_counters = [0 for i in range(parsed_params['rows'] * parsed_params['width'])]
+    parsed_counters = [0 for i in range(parsed_params['levels'] * parsed_params['rows'] * parsed_params['width'])]
 
     for idx, line in enumerate(counter_lines):
         tokens = line.split(' ')
         tokens = [int(token) for token in tokens]
 
+        if len(tokens) == 3:
+            # non-univmon
+            level = 0
+        else:
+            # univmon
+            level = tokens[1]
+
         # based on row-major format
-        counter_array_idx = tokens[1] * parsed_params['width'] + tokens[2]
+        counter_array_idx = level * parsed_params['width'] * parsed_params['row'] + tokens[2] * parsed_params['width'] + tokens[3]
         parsed_counters[counter_array_idx] = tokens[0]
 
     return parsed_counters
