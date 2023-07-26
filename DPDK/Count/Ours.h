@@ -32,7 +32,7 @@ public:
         fprintf(stderr, "Finished printing counters\n");
     }
 
-    void insert_child(Sketch<uint64_t>* p, myQueue& q, const uint64_t& packet, long printing_threshold){
+    void insert_child(Sketch<uint64_t>* p, myQueue& q, const uint64_t& packet){
         auto sketch = ((MyChild_Count*)p)->sketch;
         uint32_t pos[HASH_NUM];
         int32_t incre[HASH_NUM];
@@ -41,22 +41,11 @@ public:
             uint32_t hashNum = hash(packet, hashPos);
             pos[hashPos] = (hashNum >> 1) % LENGTH;
             incre[hashPos] = increment[hashNum & 1];
-	    //printf("%lx %u %d %d\n", packet, hashNum, pos[hashPos], incre[hashPos]);
         }
 
         for(uint32_t hashPos = 0;hashPos < HASH_NUM;++hashPos){
             sketch[hashPos][pos[hashPos]] += incre[hashPos];
-            //if(sketch[hashPos][pos[hashPos]] * incre[hashPos] >= PROMASK){
-            //    q.enqueue(Count_Entry<uint64_t>(packet, hashPos, pos[hashPos], sketch[hashPos][pos[hashPos]]));
-            //    sketch[hashPos][pos[hashPos]] = 0;
-            //}
         }
-
-        if(number_since_last_print >= printing_threshold) {
-            printf("Initiating print\n");
-            print_sketch_counters(sketch);
-            number_since_last_print = 0;
-	}
     }
 
     void merge(Sketch<uint64_t>* p, Count_Entry<uint64_t> temp){

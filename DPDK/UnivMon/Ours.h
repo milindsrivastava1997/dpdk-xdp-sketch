@@ -32,7 +32,7 @@ public:
         fprintf(stderr, "Finished printing counters\n");
     }
 
-    void insert_child(Sketch<uint64_t>* p, myQueue& q, const uint64_t& packet, long printing_threshold){
+    void insert_child(Sketch<uint64_t>* p, myQueue& q, const uint64_t& packet){
         auto sketch = ((MyChild_Univ*)p)->sketch;
 
         uint32_t polar = hash(packet, 199);
@@ -50,11 +50,6 @@ public:
 
             for(uint32_t hashPos = 0;hashPos < HASH_NUM;++hashPos){
                 sketch[level][hashPos][pos[hashPos]] += incre[hashPos];
-                if(sketch[level][hashPos][pos[hashPos]] * incre[hashPos] >= PROMASK){
-                    q.enqueue(Univ_Entry<uint64_t>(packet, level, hashPos, pos[hashPos],
-                        sketch[level][hashPos][pos[hashPos]]));
-                    sketch[level][hashPos][pos[hashPos]] = 0;
-                }
             }
         }
     }

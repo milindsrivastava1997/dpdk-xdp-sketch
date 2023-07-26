@@ -22,7 +22,7 @@ public:
 
     virtual void modify_threshold() = 0;
 
-    virtual void insert_child(Sketch<Key>* sketch, myQueue& q, const Key& packet, long printing_threshold) = 0;
+    virtual void insert_child(Sketch<Key>* sketch, myQueue& q, const Key& packet) = 0;
 
     void coordinator(unsigned queue_id){
         uint64_t start, end;
@@ -54,7 +54,7 @@ public:
         delete sketch;
     }
 
-    void local(unsigned queue_id, long printing_threshold, Sketch<Key>** child_sketch_ptr=NULL){
+    void local(unsigned queue_id, Sketch<Key>** child_sketch_ptr=NULL){
         RTE_LOG(INFO, L2FWD, "%u core entering local sketch %u\n", rte_lcore_id(), queue_id);
 
         uint32_t batches = 0;
@@ -105,7 +105,7 @@ public:
 
             for(uint32_t i = 0;i < nb_rx;++i){
                 number_since_last_print += 1;
-                insert_child(sketch, que[queue_id], item[i], printing_threshold);
+                insert_child(sketch, que[queue_id], item[i]);
                 number += 1;
             }
         }

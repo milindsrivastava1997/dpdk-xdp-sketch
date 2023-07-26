@@ -111,6 +111,7 @@ signal_handler(int signum)
         printf("\n\nSignal %d received, preparing to exit...\n",
                 signum);
 
+        print_stats_once();
         for(int i = 0; i < NUM_RX_QUEUE; i++) {
             printf("%u: %lx\n", i, (int64_t)child_sketches[i]);
             if(child_sketches[i] != NULL) {

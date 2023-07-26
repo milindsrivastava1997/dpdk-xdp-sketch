@@ -8,8 +8,6 @@
 
 std::atomic<bool> is_used[NUM_RX_QUEUE + 1];
 
-long printing_threshold;
-
 int distribute(void *arg){
     MYSKETCH* sketch = (MYSKETCH*) arg;
 
@@ -29,7 +27,7 @@ int distribute(void *arg){
     for(uint32_t i = 0;i < NUM_RX_QUEUE;++i){
         set = is_used[i + 1].exchange(set);
         if(!set){
-            sketch->local(i, printing_threshold);
+            sketch->local(i, &(child_sketches[i]));
             return 3;
         }
     }
@@ -51,7 +49,7 @@ void print_sketch_counters_2(void* sketch) {
     for(uint32_t i = 0; i < HASH_NUM; i++) {
         for(uint32_t j = 0; j < LENGTH; j++) {
             if(sketch_counter->sketch[i][j] != 0) {
-                printf("Counter: %d %d %d\n", sketch_counter->sketch[i][j], i, j);
+                printf("Counter: %" Value_printf_specifier" %d %d\n", sketch_counter->sketch[i][j], i, j);
             }
         }
     }
@@ -65,8 +63,6 @@ int main(int argc, char **argv)
     int ret = main_dpdk(argc, argv);
     argc -= ret;
     argv += ret;
-
-    printing_threshold = atol(argv[1]);
 
     print_parameters();
 

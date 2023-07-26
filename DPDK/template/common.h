@@ -109,6 +109,14 @@ inline void init_key(Packet& packet, uint64_t src, uint64_t dst){
     packet.dst = dst;
 }
 
+void print_stats_once() {
+    uint64_t total_packets_rx = 0;
+    for(uint32_t i = 0;i < NUM_RX_QUEUE;++i){
+        total_packets_rx += port_statistics[i].rx;
+    }
+    printf("total=%lu\n", total_packets_rx);
+}
+
 /* Print out statistics */
 void
 print_stats()
