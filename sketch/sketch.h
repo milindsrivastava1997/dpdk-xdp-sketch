@@ -1,6 +1,8 @@
 #ifndef SKETCH_H
 #define SKETCH_H
 
+#include <inttypes.h>
+
 #include "../common/hash.h"
 #include "../common/Heap.h"
 

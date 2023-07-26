@@ -3,6 +3,7 @@
 
 #include "sketch.h"
 
+#define Value_printf_specifier PRIu32
 typedef uint32_t Value;
 
 template<typename Key>

@@ -3,6 +3,7 @@
 
 #include "sketch.h"
 
+#define Value_printf_specifier PRId32
 typedef int32_t Value;
 
 constexpr static int32_t increment[2] = {1, -1};
