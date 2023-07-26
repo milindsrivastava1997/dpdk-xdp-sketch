@@ -17,10 +17,8 @@ def execute_in_shell(cmd, cwd=None):
     subprocess.run(cmd, shell=True, cwd=cwd)
 
 def execute_with_popen(cmd, cwd=None):
-    #NOTE: shell=True is not passed because that prevents .kill() from working?
     print(cmd)
     popen = subprocess.Popen(cmd, cwd=cwd, shell=True)
-    time.sleep(10)
     return popen
 
 def check_socket(sock):
