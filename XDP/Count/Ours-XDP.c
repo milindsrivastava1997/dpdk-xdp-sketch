@@ -11,7 +11,7 @@ struct Length{
     uint64_t length;
 };
 
-typedef int8_t sketch_t;
+typedef int32_t sketch_t;
 
 struct{
     __uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);

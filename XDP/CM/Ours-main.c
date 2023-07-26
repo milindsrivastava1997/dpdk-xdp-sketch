@@ -8,6 +8,8 @@
 #define LENGTH 65536
 #define HEAP_SIZE 0x3ff
 
+#include "../xdp_common/print_util.h"
+
 template<typename Key>
 using MyCM = CM<Key, HASH_NUM, LENGTH, HEAP_SIZE>;
 
@@ -93,7 +95,7 @@ public:
 
 int main(int argc, char *argv[]){
     Abstract* abs = new Ours();
-    abs->update(strtoul(argv[1], NULL, 0));
+    abs->update();
     delete abs;
     return 0;
 }

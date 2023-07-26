@@ -28,12 +28,30 @@ struct Length{
 
 static const uint32_t zero = 0;
 static int ncpus = 0;
-typedef int64_t sketch_t;
 int32_t global_sketch_fd = -1;
+int32_t global_stats_fd = -1;
 
 /* This function will count the per-CPU number of packets and print out
  * the total number of dropped packets number and PPS (packets per second).
 */
+
+void print_stats_once() {
+    ncpus = libbpf_num_possible_cpus();
+    uint64_t* values = new uint64_t [ncpus];
+    uint64_t values_sum = 0;
+    
+    memset(values, 0, sizeof(uint64_t) * ncpus);
+
+    bpf_map_lookup_elem(global_stats_fd, &zero, values);
+    for (uint32_t i = 0; i < ncpus; i++) {
+        values_sum += values[i];
+    }
+
+    printf("total=%lu\n", values_sum);
+
+    delete [] values;
+}
+
 void poll_stats(int fd){
     ncpus = libbpf_num_possible_cpus();
     uint64_t* values = new uint64_t [ncpus];
@@ -75,44 +93,15 @@ void poll_stats(int fd){
     delete [] prev;
 }
 
-void print_counters_once() {
-    ncpus = libbpf_num_possible_cpus();
-    sketch_t* sketch_ptr = new sketch_t [ncpus];
-    int ret;
-
-    memset(sketch_ptr, 0, sizeof(sketch_t) * ncpus);
-
-    for (uint32_t sketch_idx = 0; sketch_idx < 3 * 65536; sketch_idx++) {
-        ret = bpf_map_lookup_elem(global_sketch_fd, &sketch_idx, sketch_ptr);
-        if(ret < 0) {
-            printf("sketch fd ret: %d dbg: %d\n", ret, sketch_idx);
-        }
-        for (uint32_t i = 0; i < ncpus; i++) {
-            if(sketch_ptr[i] != 0) {
-                printf("Counter: %d %d %d\n", sketch_idx, i, (int8_t)sketch_ptr[i]);
-            }
-        }
-    }
-    printf("Finished printing counters\n");
-    fflush(stdout);
-    fprintf(stderr, "Finished printing counters\n");
-
-    delete [] sketch_ptr;
-}
-
-void sigint_handler(int signum) {
-    printf("Got sigint\n");
-    print_counters_once();
-    exit(0);
-}
+void sigint_handler(int);
 
 class Abstract{
 public:
 
     virtual int32_t merge() = 0;
 
-    int update(uint64_t printing_threshold){
-        if(xdp_load(printing_threshold) < 0)
+    int update(){
+        if(xdp_load() < 0)
             return -1;
 
         // register SIGINT handler
@@ -128,7 +117,7 @@ public:
         return 0;
     }
 
-    int32_t xdp_load(uint64_t printing_threshold){
+    int32_t xdp_load(){
         struct ifreq ifr;
         int sock_fd;
 
@@ -185,6 +174,7 @@ public:
         buf_fd = bpf_object__find_map_fd_by_name(bpf_obj, "buffer");
         len_fd = bpf_object__find_map_fd_by_name(bpf_obj, "buffer_length");
         global_sketch_fd = bpf_object__find_map_fd_by_name(bpf_obj, "sketch");
+        global_stats_fd = stats_fd;
 
         if (stats_fd < 0 || thd_fd < 0 || buf_fd < 0 || len_fd < 0 || global_sketch_fd < 0) {
             printf("Error, get stats/thd fd from bpf obj failed\n");
