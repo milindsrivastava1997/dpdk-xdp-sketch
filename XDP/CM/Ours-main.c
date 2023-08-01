@@ -93,7 +93,12 @@ public:
     
 };
 
+void print_parameters() {
+    printf("Sketch parameters\n%d %d %d\n", HASH_NUM, LENGTH, HEAP_SIZE);
+}
+
 int main(int argc, char *argv[]){
+    print_parameters();
     Abstract* abs = new Ours();
     abs->update();
     delete abs;
