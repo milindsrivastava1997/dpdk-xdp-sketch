@@ -8,7 +8,7 @@ local sendport = "0";
 
 -- parameters to use
 local burst = 1;
-local rate = 0.1;
+local rate = 1;
 
 function main()
     -- get dstmac and count from env variables
