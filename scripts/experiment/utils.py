@@ -14,7 +14,7 @@ def get_ssh_cmd(username, ip, cmd, sudo=False):
 
 def execute_in_shell(cmd, cwd=None):
     print(cmd)
-    subprocess.run(cmd, shell=True, cwd=cwd)
+    return subprocess.run(cmd, shell=True, cwd=cwd)
 
 def execute_with_popen(cmd, cwd=None):
     print(cmd)

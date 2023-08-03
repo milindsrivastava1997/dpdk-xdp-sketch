@@ -13,10 +13,20 @@ import constants
 def start_receiver(args):
     sketch_dir = os.path.join(constants.ROOT_DIR_MAP[args.dataplane], args.sketch)
     sketch_out = os.path.join(args.output_dir, 'sketch_out')
+    # change sketch params
+    change_sketch_params_cmd = constants.CHANGE_PARAMS_CMD.format(args.dataplane, args.sketch, args.rows, args.width, args.levels)
+    completed_process = utils.execute_in_shell(change_sketch_params_cmd, cwd=constants.EXPERIMENT_SCRIPTS_DIR)
+    if completed_process.returncode != 0:
+        print('Sketch param change return code', completed_process.returncode)
+        return None
+
     # compile
-    #compile_cmd = '(cd {}; {})'.format(sketch_dir, constants.COMPILE_CMD_MAP[args.dataplane])
     compile_cmd = constants.COMPILE_CMD_MAP[args.dataplane]
-    utils.execute_in_shell(compile_cmd, cwd=sketch_dir)
+    completed_process = utils.execute_in_shell(compile_cmd, cwd=sketch_dir)
+    if completed_process.returncode != 0:
+        print('Compilation return code', completed_process.returncode)
+        return None
+    
     # run
     if args.dataplane == constants.DPDK:
         run_cmd = constants.RUN_CMD_MAP[args.dataplane].format(constants.RECEIVER_PCI, sketch_out)
@@ -73,6 +83,9 @@ def main(args):
     os.makedirs(args.output_dir, exist_ok=True)
     # run receiver
     receiver_popen = start_receiver(args)
+    if receiver_popen is None:
+        print('Could not run receiver')
+        assert(False)
     # execute sender_helper with --pcap --dstmac
     start_sender_helper(args)
     # initialize socket
@@ -96,6 +109,10 @@ if __name__ == '__main__':
     parser.add_argument('--dataplane', required=True)
     parser.add_argument('--sketch', required=True)
     parser.add_argument('--pcap', required=True)
+
+    parser.add_argument('--rows', required=True, type=int)
+    parser.add_argument('--width', required=True, type=int)
+    parser.add_argument('--levels', required=True, type=int)
 
     args = parser.parse_args()
     main(args)

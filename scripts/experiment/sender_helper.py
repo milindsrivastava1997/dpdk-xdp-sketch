@@ -33,7 +33,7 @@ def start_sender(args, num_packets):
     # start pktgen on sender
     pktgen_cmd = constants.PKTGEN_CMD.format(constants.PKTGEN_INSTALL_DIR, constants.SENDER_PCI, constants.SENDER_LUA_SCRIPT, os.path.join(args.output_dir, 'pktgen.log'), args.pcap)
     sender_cmd = '({}; {}; {})'.format(copy_cmd, export_cmd, pktgen_cmd)
-    utils.execute_in_shell(sender_cmd, cwd=constants.PKTGEN_SCRIPT_DIR)
+    utils.execute_in_shell(sender_cmd, cwd=constants.EXPERIMENT_SCRIPTS_DIR)
 
 def get_num_packets(pcap_name):
     metadata_file_name = pcap_name.replace('.pcap', '.meta')
