@@ -26,43 +26,73 @@ def read_params(params_file):
     params = {line[0]:int(line[1]) for line in lines}
     return params
 
-def get_output_dir_name(args, sketch, pcap, level, params):
+def compare_params(params_from_dir, params_from_file):
+    # dir params
+    tokens = params_from_dir.split('_')
+    rows = int(tokens[1])
+    width = int(tokens[3])
+    levels = int(tokens[5])
+    if rows == params_from_file['rows'] and width == params_from_file['width'] and levels == params_from_file['levels']:
+        return True
+    return False
 
+def get_output_dir_name(args, sketch, pcap, level, params):
     output_dir = os.path.join(args.output_root_dir, args.project_name, constants.SKETCH_NAME_MAP[sketch], pcap, constants.FLOWKEY)
     params_dir = 'row_{}_width_{}_level_{}_epoch_60_count_1_seed_1'.format(params['rows'], params['width'], params['levels'])
     output_dir = os.path.join(output_dir, params_dir, '01')
     output_dir = os.path.join(output_dir, 'level_{:02d}'.format(level))
     return output_dir
 
-def dump_files(input_dir, output_dir, params):
-    # dump sketch_counter.txt
-    src_path = os.path.join(input_dir, 'parsed_sketch_out.counters')
+def dump_files(input_dir, output_dir, params, level):
+    # dump counters
+    src_path = os.path.join(input_dir, 'parsed_sketch_out.counters_' + str(level))
     dst_path = os.path.join(output_dir, 'sketch_counter.txt')
     shutil.copyfile(src_path, dst_path)
     # dump total.txt
-    with open(os.path.join(output_dir, 'total.txt'), 'w') as fout:
-        fout.write('{}\n'.format(params['total_count']))
+    if params['levels'] > 1:
+        with open(os.path.join(output_dir, 'total.txt'), 'w') as fout:
+            fout.write('{}\n'.format(params['count_' + str(level)]))
+    else:
+        assert(level == 0)
+        with open(os.path.join(output_dir, 'total.txt'), 'w') as fout:
+            fout.write('{}\n'.format(params['total_count']))
     
 def main(args):
-    sketches = constants.DP_SKETCH_MAP[args.dataplane]
-    clean_pcaps = [clean_pcap_name(p) for p in constants.PCAPS]
+    input_root_dir = os.path.join(args.input_root_dir, args.dataplane)
+
+    sketches = os.listdir(input_root_dir)
 
     for sketch in sketches:
-        for pcap, clean_pcap in zip(constants.PCAPS, clean_pcaps):
-            input_dir = os.path.join(args.input_root_dir, args.dataplane, sketch, pcap)
-            input_file = os.path.join(input_dir, 'sketch_out')
-            temp_output_file = os.path.join(input_dir, 'parsed_sketch_out')
+        sketch_dir = os.path.join(input_root_dir, sketch)
+        pcaps = os.listdir(sketch_dir)
+        clean_pcaps = [clean_pcap_name(p) for p in pcaps]
 
-            # run parse script
-            run_parse_counters(input_file, temp_output_file, args.dataplane)
-            # read parsed params
-            params = read_params(temp_output_file + '.params')
-            for level in range(params['levels']):
-                # create directory for inference
-                output_dir = get_output_dir_name(args, sketch, clean_pcap, level, params)
-                os.makedirs(output_dir, exist_ok=True)
-                # copy files for inference
-                dump_files(input_dir, output_dir, params)
+        for pcap, clean_pcap in zip(pcaps, clean_pcaps):
+            pcap_dir = os.path.join(sketch_dir, pcap)
+            params = os.listdir(pcap_dir)
+
+            for param in params:
+                param_dir = os.path.join(pcap_dir, param)
+                input_dir = param_dir
+                input_file = os.path.join(input_dir, 'sketch_out')
+                temp_output_file = os.path.join(input_dir, 'parsed_sketch_out')
+
+                # run parse script
+                run_parse_counters(input_file, temp_output_file, args.dataplane)
+                # read parsed params
+                params_from_file = read_params(temp_output_file + '.params')
+                # verify parsed params
+                if not compare_params(param, params_from_file):
+                    print('Params compare failed!')
+                    print(sketch, pcap, param)
+                    continue
+
+                for level in range(params_from_file['levels']):
+                    # create directory for inference
+                    output_dir = get_output_dir_name(args, sketch, clean_pcap, level, params_from_file)
+                    os.makedirs(output_dir, exist_ok=True)
+                    # copy files for inference
+                    dump_files(input_dir, output_dir, params_from_file, level)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
