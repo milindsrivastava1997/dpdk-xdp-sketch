@@ -34,6 +34,7 @@ public:
 
     void insert_child(Sketch<uint64_t>* p, myQueue& q, const uint64_t& packet){
         auto sketch = ((MyChild_Univ*)p)->sketch;
+        auto packet_count = ((MyChild_Univ*)p)->packet_count;
 
         uint32_t polar = hash(packet, 199);
         uint32_t max_level = MIN(MAX_LEVEL - 1, __builtin_clz(polar));
@@ -51,6 +52,7 @@ public:
             for(uint32_t hashPos = 0;hashPos < HASH_NUM;++hashPos){
                 sketch[level][hashPos][pos[hashPos]] += incre[hashPos];
             }
+            packet_count[level] += 1
         }
     }
 

@@ -44,20 +44,24 @@ void print_parameters() {
 }
 
 void print_sketch_counters_2(void* sketch) {
-    CHILDSKETCH_TYPE* sketch_counter = (CHILDSKETCH_TYPE*)sketch;
+    CHILDSKETCH_TYPE* child_sketch = (CHILDSKETCH_TYPE*)sketch;
 
     for(uint32_t i = 0; i < MAX_LEVEL; i++) {
         for(uint32_t j = 0; j < HASH_NUM; j++) {
             for(uint32_t k = 0; k < LENGTH; k++) {
-                if(sketch_counter->sketch[i][j][k] != 0) {
-                    printf("Counter: %" Value_printf_specifier" %d %d %d\n", sketch_counter->sketch[i][j][k], i, j, k);
+                if(child_sketch->sketch[i][j][k] != 0) {
+                    printf("Counter: %" Value_printf_specifier" %d %d %d\n", child_sketch->sketch[i][j][k], i, j, k);
                 }
             }
         }
     }
     printf("Finished printing counters\n");
+    
+    for(uint32_t i = 0; i < MAX_LEVEL; i++) {
+        printf("Packet count: %d %"PRIu64"\n", i, child_sketch->packet_count[i]);
+    }
+
     fflush(stdout);
-    fprintf(stderr, "Finished printing counters\n");
 }
 
 int main(int argc, char **argv)

@@ -26,9 +26,11 @@ class Child_UnivMon : public Sketch<Key>{
 public:
 
     Value sketch[MAX_LEVEL][HASH_NUM][LENGTH];
+    uint64_t packet_count[MAX_LEVEL];
 
     Child_UnivMon(){
         memset(sketch, 0, sizeof(Value) * MAX_LEVEL * HASH_NUM * LENGTH);
+        memset(packet_count, 0, sizeof(int64_t) * MAX_LEVEL);
     }
 
     ~Child_UnivMon(){}
