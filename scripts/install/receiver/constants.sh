@@ -1,8 +1,11 @@
 #!/bin/bash
 NEW_KERNEL="5.15.0-72-generic"
 
-line_to_add="FORCE_SUBDIR_LIBBPF=1"
-file_to_modify="./configure"
+configure_line="FORCE_SUBDIR_LIBBPF=1"
+configure_file="./configure"
+
+makefile_line="READELF\ := readelf"
+makefile_file="./lib/libxdp/Makefile"
 
 DPDK_VERSION=22.11.1
 DPDK_DIR="dpdk-"$DPDK_VERSION

@@ -5,7 +5,7 @@ import argparse
 def get_param_range(row_range, col_range, level_range):
     return [(row, 2**col, level) for row in row_range for col in col_range for level in level_range]
 
-pcap_dir = "/scratch/"
+pcap_dir = "/scratch/caida/"
 pcaps = [
     "equinix-nyc.dirA.20180517-130900.UTC.anon.tcp_or_udp.rewrite.pcap",
     "equinix-nyc.dirA.20180517-131000.UTC.anon.tcp_or_udp.rewrite.pcap",

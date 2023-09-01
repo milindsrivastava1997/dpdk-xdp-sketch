@@ -10,7 +10,13 @@ get_libxdp_install_dir()
 modify_configure_file()
 {
     line_number=$(grep "()" configure -n -m1 | cut -d ':' -f1)
-    sed -i $line_number"i "$line_to_add $file_to_modify
+    sed -i $line_number"i "$configure_line $configure_file
+}
+
+modify_makefile()
+{
+    makefile_line="21"
+    sed -i $makefile_line"i "$makefile_line $makefile_file
 }
 
 cd /local
@@ -19,6 +25,7 @@ cd xdp-tools
 git submodule update --init
 modify_configure_file
 ./configure
+modify_makefile
 make
 sudo make install
 sudo ldconfig
