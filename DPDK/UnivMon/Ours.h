@@ -39,20 +39,25 @@ public:
         uint32_t polar = hash(packet, 199);
         uint32_t max_level = MIN(MAX_LEVEL - 1, __builtin_clz(polar));
 
-        for(uint32_t level = 0; level <= max_level;++level){
+        //for(uint32_t level = 0; level <= max_level;++level){
+        for(uint32_t level = max_level; level <= max_level;++level){
             uint32_t pos[HASH_NUM];
             int32_t incre[HASH_NUM];
 
             for(uint32_t hashPos = 0;hashPos < HASH_NUM;++hashPos){
-                uint32_t hashNum = hash(packet, level * HASH_NUM + hashPos);
-                pos[hashPos] = (hashNum >> 1) % LENGTH;
-                incre[hashPos] = increment[hashNum & 1];
+                //uint32_t hashNum = hash(packet, level * HASH_NUM + hashPos);
+                //pos[hashPos] = (hashNum >> 1) % LENGTH;
+                //incre[hashPos] = increment[hashNum & 1];
+                uint32_t hashNum_index = hash(packet, 2 * level * HASH_NUM + hashPos);
+                uint32_t hashNum_incre = hash(packet, 2 * level * HASH_NUM + HASH_NUM + hashPos);
+                pos[hashPos] = hashNum_index % LENGTH;
+                incre[hashPos] = increment[hashNum_incre & 1];
             }
 
             for(uint32_t hashPos = 0;hashPos < HASH_NUM;++hashPos){
                 sketch[level][hashPos][pos[hashPos]] += incre[hashPos];
             }
-            packet_count[level] += 1
+            packet_count[level] += 1;
         }
     }
 

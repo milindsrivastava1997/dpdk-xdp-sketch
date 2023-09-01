@@ -38,9 +38,13 @@ public:
         int32_t incre[HASH_NUM];
 
         for(uint32_t hashPos = 0;hashPos < HASH_NUM;++hashPos){
-            uint32_t hashNum = hash(packet, hashPos);
-            pos[hashPos] = (hashNum >> 1) % LENGTH;
-            incre[hashPos] = increment[hashNum & 1];
+            //uint32_t hashNum = hash(packet, hashPos);
+            //pos[hashPos] = (hashNum >> 1) % LENGTH;
+            //incre[hashPos] = increment[hashNum & 1];
+            uint32_t hashNum_index = hash(packet, hashPos);
+            uint32_t hashNum_incre = hash(packet, hashPos + HASH_NUM);
+            pos[hashPos] = hashNum_index % LENGTH;
+            incre[hashPos] = increment[hashNum_incre & 1];
         }
 
         for(uint32_t hashPos = 0;hashPos < HASH_NUM;++hashPos){

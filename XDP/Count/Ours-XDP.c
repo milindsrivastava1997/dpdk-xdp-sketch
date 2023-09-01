@@ -3,8 +3,8 @@
 
 #include "XDP_Count.h"
 
-#define HASH_NUM 3
-#define LENGTH 65536
+#define HASH_NUM 5
+#define LENGTH 131072
 
 struct Length{
     uint64_t nanoseconds;
@@ -77,10 +77,12 @@ int sketch_prog(struct xdp_md *skb)
     increment[1] = -1;
         
     for(uint32_t i = 0;i < HASH_NUM;++i){
-        uint32_t hashNum = hash(packet, i);
+        uint32_t hashNum_index = hash(packet, i);
+        uint32_t hashNum_incre = hash(packet, HASH_NUM + i);
         //bpf_printk("SM: packet: %lx %u %x\n", packet, i, hashNum);
-        uint32_t index = (hashNum >> 1) % (uint32_t)LENGTH + i * LENGTH;
-        int32_t incre = increment[hashNum & 1];
+        //uint32_t index = (hashNum >> 1) % (uint32_t)LENGTH + i * LENGTH;
+        uint32_t index = hashNum_index % (uint32_t)LENGTH + i * LENGTH;
+        int32_t incre = increment[hashNum_incre & 1];
 
         sketch_t* counter = bpf_map_lookup_elem(&sketch, &index);
         if(counter){
