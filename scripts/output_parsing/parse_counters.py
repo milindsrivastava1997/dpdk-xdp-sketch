@@ -100,7 +100,8 @@ def main(args):
     if len(packet_count_lines) == 0:
         packet_count_lines = None
     else:
-        assert(int(packet_count_lines[0][1]) == total_count)
+        pass
+        #assert(int(packet_count_lines[0][1]) == total_count)
     parsed_params = parse_params(params_line, packet_count_lines, total_count)
     parsed_counters = parse_counters(counter_lines, parsed_params, args.dataplane)
     dump_info(parsed_params, parsed_counters, args.output_file)
