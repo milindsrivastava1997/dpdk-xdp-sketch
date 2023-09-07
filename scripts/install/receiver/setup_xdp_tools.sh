@@ -15,8 +15,8 @@ modify_configure_file()
 
 modify_makefile()
 {
-    makefile_line="21"
-    sed -i $makefile_line"i "$makefile_line $makefile_file
+    makefile_line_number="21"
+    sed -i $makefile_line_number"i ""$makefile_line" $makefile_file
 }
 
 cd /local
